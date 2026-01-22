@@ -1,0 +1,29 @@
+# CODEOWNERS file
+# This file defines code owners for different parts of the repository
+# When a PR is created, owners are automatically requested as reviewers
+#
+# Syntax:
+#   path/to/file @username
+#   or
+#   path/to/file @team-name
+
+# Global owners - all files
+* @KhoiRobert
+
+# Configuration files
+/config/ @KhoiRobert
+
+# Documentation
+/README.md @KhoiRobert
+/CONTRIBUTING.md @KhoiRobert
+/LICENSE @KhoiRobert
+
+# GitHub workflows and templates
+/.github/ @KhoiRobert
+
+# Python code (when you add it)
+# /src/ @KhoiRobert
+# /tests/ @KhoiRobert
+
+# Database migrations (when you add them)
+# /migrations/ @KhoiRobert
