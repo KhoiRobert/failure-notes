@@ -1,0 +1,16 @@
+# Database settings
+# Copy this to database.yml and fill in your values
+
+# What database to use
+type: postgresql
+
+# Where is the database
+host: localhost
+port: 5432
+
+# Database name
+database: failure_notes
+
+# Login info
+username: your_username
+password: your_password

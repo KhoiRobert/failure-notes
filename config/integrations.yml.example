@@ -1,0 +1,18 @@
+# Slack and Gmail settings
+# Copy this to integrations.yml and add your info
+
+# Slack
+slack:
+  enabled: false
+  webhookUrl: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+# Gmail
+email:
+  enabled: false
+  smtp:
+    host: "smtp.gmail.com"
+    port: 587
+    auth:
+      user: "your-email@gmail.com"
+      password: "your-app-password"
+  to: "your-email@gmail.com"

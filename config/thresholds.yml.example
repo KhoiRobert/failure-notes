@@ -1,0 +1,10 @@
+# Alert settings
+# Copy this to thresholds.yml
+
+# How many mistakes before sending an alert
+default:
+  count: 3
+  timeWindowDays: 30  # In how many days
+  channels:
+    - slack
+    - email
