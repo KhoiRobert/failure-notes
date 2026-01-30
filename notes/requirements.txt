@@ -1,0 +1,26 @@
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Database
+psycopg[binary]==3.3.2  # Latest stable version with binary wheels
+sqlalchemy==2.0.36
+
+# Environment & Config
+python-dotenv==1.0.1
+pyyaml==6.0.2
+
+# Validation (using versions with pre-built wheels)
+pydantic==2.9.2
+pydantic-settings==2.6.1
+email-validator==2.2.0
+
+# Authentication
+python-jose[cryptography]==3.3.0
+bcrypt==4.1.2  # Direct bcrypt instead of passlib to avoid initialization issues
+
+# HTTP Client (for AI API calls)
+httpx==0.27.2
+
+# CORS & Multipart
+python-multipart==0.0.12

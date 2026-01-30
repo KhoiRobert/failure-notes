@@ -11,6 +11,6 @@ port: 5432
 # Database name
 database: failure_notes
 
-# Login info
-username: your_username
-password: your_password
+# Login info (default Docker credentials)
+username: postgres
+password: postgres
