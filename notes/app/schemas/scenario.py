@@ -18,6 +18,7 @@ class ScenarioResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     id: int
+    user_id: int
     root_cause_id: Optional[int]
     context: str
     summary: Optional[str]

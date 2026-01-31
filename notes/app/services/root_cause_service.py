@@ -25,15 +25,25 @@ def get_all_root_causes(db: Session, skip: int = 0, limit: int = 100) -> List[Ro
     return db.query(RootCause).offset(skip).limit(limit).all()
 
 def update_root_cause(db: Session, root_cause_id: int, root_cause_data: RootCauseUpdate) -> Optional[RootCause]:
-    """Update root cause"""
+    """Update root cause (full update, for admin/internal use)"""
     db_root_cause = get_root_cause_by_id(db, root_cause_id)
     if not db_root_cause:
         return None
-    
+
     update_data = root_cause_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_root_cause, field, value)
-    
+
+    db.commit()
+    db.refresh(db_root_cause)
+    return db_root_cause
+
+def update_root_cause_solution(db: Session, root_cause_id: int, solution: Optional[str]) -> Optional[RootCause]:
+    """Update only the solution/recommendation field (user permission)"""
+    db_root_cause = get_root_cause_by_id(db, root_cause_id)
+    if not db_root_cause:
+        return None
+    db_root_cause.solution = solution
     db.commit()
     db.refresh(db_root_cause)
     return db_root_cause

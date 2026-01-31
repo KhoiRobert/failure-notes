@@ -14,6 +14,10 @@ class RootCauseUpdate(BaseModel):
     solution: Optional[str] = None
     occurrence_count: Optional[int] = None
 
+class RootCauseUpdateSolution(BaseModel):
+    """Users can only edit the recommendation/solution field"""
+    solution: Optional[str] = None
+
 # Response schemas
 class RootCauseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

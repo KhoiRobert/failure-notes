@@ -2,35 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.schemas.root_cause import (
-    RootCauseCreate,
-    RootCauseUpdate,
+    RootCauseUpdateSolution,
     RootCauseResponse,
     RootCauseWithScenarios
 )
 from app.services.root_cause_service import (
-    create_root_cause,
     get_root_cause_by_id,
     get_all_root_causes,
-    update_root_cause,
-    delete_root_cause,
+    update_root_cause_solution,
     search_root_causes,
     get_root_causes_by_occurrence
 )
-from app.services.scenario_service import get_scenarios_by_root_cause
+from app.services.scenario_service import get_scenario_count_by_root_cause
 from app.utils.auth import get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/root-causes", tags=["root-causes"])
-
-@router.post("/", response_model=RootCauseResponse, status_code=status.HTTP_201_CREATED)
-def create_new_root_cause(
-    root_cause_data: RootCauseCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Requires authentication
-):
-    """Create a new root cause"""
-    root_cause = create_root_cause(db, root_cause_data)
-    return root_cause
 
 @router.get("/", response_model=list[RootCauseResponse])
 def get_all_root_causes_list(
@@ -60,9 +47,8 @@ def get_root_cause(root_cause_id: int, db: Session = Depends(get_db)):
             detail="Root cause not found"
         )
     
-    # Get scenario count
-    scenarios = get_scenarios_by_root_cause(db, root_cause_id)
-    scenario_count = len(scenarios)
+    # Get scenario count (all users' scenarios linked to this root cause)
+    scenario_count = get_scenario_count_by_root_cause(db, root_cause_id)
     
     # Create response with scenario count
     response = RootCauseWithScenarios.model_validate(root_cause)
@@ -70,33 +56,18 @@ def get_root_cause(root_cause_id: int, db: Session = Depends(get_db)):
     
     return response
 
-@router.put("/{root_cause_id}", response_model=RootCauseResponse)
-def update_root_cause_info(
+@router.patch("/{root_cause_id}/solution", response_model=RootCauseResponse)
+def update_root_cause_solution_endpoint(
     root_cause_id: int,
-    root_cause_data: RootCauseUpdate,
+    data: RootCauseUpdateSolution,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Requires authentication
+    current_user: User = Depends(get_current_user)
 ):
-    """Update root cause"""
-    root_cause = update_root_cause(db, root_cause_id, root_cause_data)
+    """Edit recommendation/solution for a root cause (users can only edit this field)"""
+    root_cause = update_root_cause_solution(db, root_cause_id, data.solution)
     if not root_cause:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Root cause not found"
         )
     return root_cause
-
-@router.delete("/{root_cause_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_root_cause_by_id(
-    root_cause_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Requires authentication
-):
-    """Delete root cause"""
-    success = delete_root_cause(db, root_cause_id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Root cause not found"
-        )
-    return None

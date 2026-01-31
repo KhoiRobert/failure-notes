@@ -27,10 +27,9 @@ router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 def create_new_scenario(
     scenario_data: ScenarioCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Requires authentication
+    current_user: User = Depends(get_current_user)
 ):
-    """Create a new scenario"""
-    # Validate root_cause_id if provided
+    """Create a new scenario (owned by current user)"""
     if scenario_data.root_cause_id:
         root_cause = get_root_cause_by_id(db, scenario_data.root_cause_id)
         if not root_cause:
@@ -38,8 +37,8 @@ def create_new_scenario(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Root cause not found"
             )
-    
-    scenario = create_scenario(db, scenario_data)
+
+    scenario = create_scenario(db, scenario_data, user_id=current_user.id)
     return scenario
 
 @router.get("/", response_model=list[ScenarioResponse])
@@ -48,22 +47,27 @@ def get_all_scenarios_list(
     limit: int = Query(100, ge=1, le=100),
     root_cause_id: int = Query(None),
     search: str = Query(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """Get all scenarios with optional filtering"""
+    """Get current user's scenarios with optional filtering"""
     if search:
-        scenarios = search_scenarios(db, search_term=search, skip=skip, limit=limit)
+        scenarios = search_scenarios(db, search_term=search, user_id=current_user.id, skip=skip, limit=limit)
     elif root_cause_id:
-        scenarios = get_scenarios_by_root_cause(db, root_cause_id=root_cause_id, skip=skip, limit=limit)
+        scenarios = get_scenarios_by_root_cause(db, root_cause_id=root_cause_id, user_id=current_user.id, skip=skip, limit=limit)
     else:
-        scenarios = get_all_scenarios(db, skip=skip, limit=limit)
-    
+        scenarios = get_all_scenarios(db, user_id=current_user.id, skip=skip, limit=limit)
+
     return scenarios
 
 @router.get("/{scenario_id}", response_model=ScenarioWithRootCause)
-def get_scenario(scenario_id: int, db: Session = Depends(get_db)):
-    """Get scenario by ID with root cause details"""
-    scenario = get_scenario_by_id(db, scenario_id)
+def get_scenario(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get scenario by ID (only own scenarios)"""
+    scenario = get_scenario_by_id(db, scenario_id, user_id=current_user.id)
     if not scenario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -88,10 +92,9 @@ def update_scenario_info(
     scenario_id: int,
     scenario_data: ScenarioUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Requires authentication
+    current_user: User = Depends(get_current_user)
 ):
-    """Update scenario"""
-    # Validate root_cause_id if provided
+    """Update scenario (only own scenarios)"""
     if scenario_data.root_cause_id:
         root_cause = get_root_cause_by_id(db, scenario_data.root_cause_id)
         if not root_cause:
@@ -99,8 +102,8 @@ def update_scenario_info(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Root cause not found"
             )
-    
-    scenario = update_scenario(db, scenario_id, scenario_data)
+
+    scenario = update_scenario(db, scenario_id, scenario_data, user_id=current_user.id)
     if not scenario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -113,18 +116,17 @@ def link_scenario_to_root_cause_endpoint(
     scenario_id: int,
     root_cause_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Requires authentication
+    current_user: User = Depends(get_current_user)
 ):
-    """Link a scenario to a root cause"""
-    # Validate root cause exists
+    """Link a scenario to a root cause (only own scenarios)"""
     root_cause = get_root_cause_by_id(db, root_cause_id)
     if not root_cause:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Root cause not found"
         )
-    
-    scenario = link_scenario_to_root_cause(db, scenario_id, root_cause_id)
+
+    scenario = link_scenario_to_root_cause(db, scenario_id, root_cause_id, user_id=current_user.id)
     if not scenario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -136,10 +138,10 @@ def link_scenario_to_root_cause_endpoint(
 def delete_scenario_by_id(
     scenario_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Requires authentication
+    current_user: User = Depends(get_current_user)
 ):
-    """Delete scenario"""
-    success = delete_scenario(db, scenario_id)
+    """Delete scenario (only own scenarios)"""
+    success = delete_scenario(db, scenario_id, user_id=current_user.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
