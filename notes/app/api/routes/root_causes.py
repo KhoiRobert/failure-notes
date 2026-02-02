@@ -2,36 +2,44 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.schemas.root_cause import (
+    RootCauseCreate,
     RootCauseUpdateSolution,
     RootCauseResponse,
     RootCauseWithScenarios
 )
 from app.services.root_cause_service import (
+    create_root_cause,
     get_root_cause_by_id,
     get_all_root_causes,
     update_root_cause_solution,
     search_root_causes,
-    get_root_causes_by_occurrence
 )
 from app.services.scenario_service import get_scenario_count_by_root_cause
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_user, security
 from app.models.user import User
 
 router = APIRouter(prefix="/root-causes", tags=["root-causes"])
+
+@router.post("/", response_model=RootCauseResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(security)])
+def create_new_root_cause(
+    root_cause_data: RootCauseCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new root cause (requires authentication)"""
+    root_cause = create_root_cause(db, root_cause_data)
+    return root_cause
 
 @router.get("/", response_model=list[RootCauseResponse])
 def get_all_root_causes_list(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     search: str = Query(None),
-    min_occurrence: int = Query(None, ge=1),
     db: Session = Depends(get_db)
 ):
-    """Get all root causes with optional filtering"""
+    """Get all root causes with optional search filtering"""
     if search:
         root_causes = search_root_causes(db, search_term=search, skip=skip, limit=limit)
-    elif min_occurrence:
-        root_causes = get_root_causes_by_occurrence(db, min_occurrence=min_occurrence, skip=skip, limit=limit)
     else:
         root_causes = get_all_root_causes(db, skip=skip, limit=limit)
     
@@ -56,7 +64,7 @@ def get_root_cause(root_cause_id: int, db: Session = Depends(get_db)):
     
     return response
 
-@router.patch("/{root_cause_id}/solution", response_model=RootCauseResponse)
+@router.patch("/{root_cause_id}/solution", response_model=RootCauseResponse, dependencies=[Depends(security)])
 def update_root_cause_solution_endpoint(
     root_cause_id: int,
     data: RootCauseUpdateSolution,

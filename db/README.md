@@ -1,47 +1,42 @@
 # Database Setup
 
-This directory contains database initialization and migration scripts.
+This directory contains the database schema and initialization.
 
 ## Structure
 
 ```
 db/
-├── init.sql          # Initial database schema
-├── migrations/       # Database migration scripts
-└── seeds/           # Seed data (optional)
+├── init.sql    # Initial schema (users, sessions, root_causes, scenarios, user_root_causes)
+└── README.md
 ```
 
 ## Quick Start
 
-From the **repo root**, start the full stack (PostgreSQL + API):
+From the **repo root**:
 
 ```bash
 docker-compose up
 ```
 
-- The database schema is created automatically from `init.sql` on first startup.
-- The API runs at http://localhost:8000 (docs at http://localhost:8000/docs).
+- Schema is created from `init.sql` on first startup.
+- API: http://localhost:8000 | Docs: http://localhost:8000/docs
 
-No `.env` file is needed when using Docker Compose; it uses built-in dev defaults.
+## init.sql
 
-## Files
+Creates tables: `users`, `sessions`, `root_causes`, `scenarios`, `user_root_causes`. Mounted by Docker as `01-init.sql`; runs only when the database is initialized (empty volume).
 
-- **init.sql** - Creates all tables, indexes, and triggers
-- **migrations/** - Future database migrations go here
-- **seeds/** - Optional seed data for development
+## Connection (Docker default)
 
-## Manual Execution
+| Setting    | Value        |
+|-----------|--------------|
+| Host      | localhost    |
+| Port      | 5432         |
+| Database  | failure_notes|
+| Username  | postgres     |
+| Password  | postgres     |
 
-If you need to run the init script manually:
+## Inspect schema
 
 ```bash
-docker exec -it failure_notes_db psql -U postgres -d failure_notes -f /docker-entrypoint-initdb.d/init.sql
+docker exec -it failure_notes_db psql -U postgres -d failure_notes -c "\dt"
 ```
-
-## Connection Details
-
-- **Host:** localhost
-- **Port:** 5432
-- **Database:** failure_notes
-- **Username:** postgres
-- **Password:** postgres

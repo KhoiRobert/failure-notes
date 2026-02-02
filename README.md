@@ -58,10 +58,10 @@ curl -s -X POST http://localhost:8000/users/register \
   -H "Content-Type: application/json" \
   -d '{"username":"testuser","email":"test@example.com","password":"password123"}'
 
-# Login and get token (use the same email/password)
+# Login and get token (use email or username)
 curl -s -X POST http://localhost:8000/users/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
+  -d '{"email_or_username":"test@example.com","password":"password123"}'
 # Copy the "token" from the JSON response, then:
 
 # Call a protected endpoint (replace YOUR_TOKEN with the token from login)
@@ -82,29 +82,27 @@ Authorization is working if:
   # 1) Login and save token
   TOKEN=$(curl -s -X POST http://localhost:8000/users/login \
     -H "Content-Type: application/json" \
-    -d '{"email":"test@example.com","password":"password123"}' | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))")
+    -d '{"email_or_username":"test@example.com","password":"password123"}' | python3 -c "import sys,json; print(json.load(sys.stdin).get('token',''))")
   # 2) Call protected endpoint
   curl -s http://localhost:8000/users/me -H "Authorization: Bearer $TOKEN"
   # Expect: 200 and JSON with id, username, email
   ```
 
-**4. One-shot auth check**
-
-From the repo root (with API running):
-
-```bash
-chmod +x scripts/verify_auth.sh && ./scripts/verify_auth.sh
-```
-
-This checks: no token → 401, valid token → 200, invalid token → 401.
-
-**5. Using Swagger UI (http://localhost:8000/docs)**
+**4. Swagger UI (http://localhost:8000/docs)**
 
 1. Open http://localhost:8000/docs  
-2. Call **POST /users/login** with `{"email":"test@example.com","password":"password123"}` (register first if needed).  
+2. Call **POST /users/login** with `{"email_or_username":"test@example.com","password":"password123"}` (register first if needed). Use email or username.  
 3. Copy the `token` from the response.  
 4. Click **Authorize**, paste the token (with or without "Bearer "), then **Authorize**.  
 5. Call **GET /users/me** – it should return 200 and your user. Call it without authorizing first to see 401.
+
+**5. Admin APIs** (list all users, get user by ID)
+
+- Set `ADMIN_EMAILS` in `notes/.env` (comma-separated), e.g. `ADMIN_EMAILS=admin@example.com`
+- Login with an admin email and use the token
+- **GET /users/** – list all users (admin only)
+- **GET /users/{user_id}** – get user by ID (admin only)
+- Without admin email → 403 Forbidden
 
 ## What this does
 

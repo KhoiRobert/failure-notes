@@ -12,7 +12,6 @@ class RootCauseUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     solution: Optional[str] = None
-    occurrence_count: Optional[int] = None
 
 class RootCauseUpdateSolution(BaseModel):
     """Users can only edit the recommendation/solution field"""
@@ -26,7 +25,6 @@ class RootCauseResponse(BaseModel):
     title: str
     description: Optional[str]
     solution: Optional[str]
-    occurrence_count: int
     created_at: datetime
     updated_at: datetime
 

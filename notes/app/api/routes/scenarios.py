@@ -29,15 +29,7 @@ def create_new_scenario(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new scenario (owned by current user)"""
-    if scenario_data.root_cause_id:
-        root_cause = get_root_cause_by_id(db, scenario_data.root_cause_id)
-        if not root_cause:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Root cause not found"
-            )
-
+    """Create a new scenario (owned by current user). Only context required."""
     scenario = create_scenario(db, scenario_data, user_id=current_user.id)
     return scenario
 
@@ -95,14 +87,6 @@ def update_scenario_info(
     current_user: User = Depends(get_current_user)
 ):
     """Update scenario (only own scenarios)"""
-    if scenario_data.root_cause_id:
-        root_cause = get_root_cause_by_id(db, scenario_data.root_cause_id)
-        if not root_cause:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Root cause not found"
-            )
-
     scenario = update_scenario(db, scenario_id, scenario_data, user_id=current_user.id)
     if not scenario:
         raise HTTPException(

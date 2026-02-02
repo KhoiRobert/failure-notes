@@ -8,6 +8,7 @@ class UserRootCause(Base):
     
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, index=True)
     root_cause_id = Column(Integer, ForeignKey("root_causes.id", ondelete="CASCADE"), primary_key=True, index=True)
+    usage_count = Column(Integer, default=1, nullable=False)  # Scenarios user has for this root cause; +1 on create, -1 on delete
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     # Relationships

@@ -5,13 +5,9 @@ from typing import Optional, Any
 # Request schemas
 class ScenarioCreate(BaseModel):
     context: str
-    summary: Optional[str] = None
-    root_cause_id: Optional[int] = None
 
 class ScenarioUpdate(BaseModel):
     context: Optional[str] = None
-    summary: Optional[str] = None
-    root_cause_id: Optional[int] = None
 
 # Response schemas
 class ScenarioResponse(BaseModel):

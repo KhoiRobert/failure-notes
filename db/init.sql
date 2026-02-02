@@ -17,13 +17,12 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
--- Root causes table
+-- Root causes table (shared across users)
 CREATE TABLE IF NOT EXISTS root_causes (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT,
   solution TEXT,
-  occurrence_count INTEGER DEFAULT 1 NOT NULL,
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL
 );
@@ -31,10 +30,11 @@ CREATE TABLE IF NOT EXISTS root_causes (
 CREATE INDEX IF NOT EXISTS idx_root_causes_title ON root_causes(title);
 CREATE INDEX IF NOT EXISTS idx_root_causes_created_at ON root_causes(created_at);
 
--- Junction table: Many users can have many root causes
+-- Junction table: Many users can have many root causes; usage_count = scenarios user has for this root cause
 CREATE TABLE IF NOT EXISTS user_root_causes (
   user_id INTEGER NOT NULL,
   root_cause_id INTEGER NOT NULL,
+  usage_count INTEGER DEFAULT 1 NOT NULL,
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
   PRIMARY KEY (user_id, root_cause_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

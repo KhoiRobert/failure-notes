@@ -9,7 +9,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, max_length=72)
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email_or_username: str = Field(..., min_length=1, description="Email or username")
     password: str = Field(..., min_length=1)
 
 class UserUpdate(BaseModel):

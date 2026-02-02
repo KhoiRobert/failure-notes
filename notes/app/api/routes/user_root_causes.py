@@ -11,6 +11,7 @@ from app.services.user_root_cause_service import (
     unlink_user_from_root_cause,
     get_user_root_causes,
     get_root_cause_users,
+    get_usage_count,
     is_user_linked_to_root_cause,
     get_user_root_cause_count,
     get_root_cause_user_count
@@ -140,6 +141,16 @@ def check_user_root_cause_link(
         "root_cause_id": root_cause_id,
         "is_linked": is_linked
     }
+
+@router.get("/usage-count", response_model=dict)
+def get_root_cause_usage_count(
+    root_cause_id: int = Query(..., description="Root cause ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get how many scenarios the current user has for a root cause (for alerts)"""
+    count = get_usage_count(db, user_id=current_user.id, root_cause_id=root_cause_id)
+    return {"root_cause_id": root_cause_id, "usage_count": count}
 
 @router.get("/user/{user_id}/count", response_model=dict)
 def get_user_root_cause_count_endpoint(user_id: int, db: Session = Depends(get_db)):

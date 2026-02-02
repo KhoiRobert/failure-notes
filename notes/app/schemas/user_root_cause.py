@@ -13,6 +13,7 @@ class UserRootCauseResponse(BaseModel):
     
     user_id: int
     root_cause_id: int
+    usage_count: int = 0
     created_at: datetime
 
 class UserRootCauseWithDetails(UserRootCauseResponse):

@@ -68,9 +68,9 @@ def update_user(db: Session, user_id: int, user_data: UserUpdate) -> Optional[Us
     db.refresh(db_user)
     return db_user
 
-def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    """Authenticate user with email and password"""
-    user = get_user_by_email(db, email)
+def authenticate_user(db: Session, email_or_username: str, password: str) -> Optional[User]:
+    """Authenticate user with email or username and password"""
+    user = get_user_by_email(db, email_or_username) or get_user_by_username(db, email_or_username)
     if not user:
         return None
     if not verify_password(password, user.password_hash):

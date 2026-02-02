@@ -1,15 +1,14 @@
 from sqlalchemy.orm import Session
 from app.models.scenario import Scenario
 from app.schemas.scenario import ScenarioCreate, ScenarioUpdate
+from app.services.user_root_cause_service import increment_usage_or_create_link, decrement_usage
 from typing import Optional, List
 
 def create_scenario(db: Session, scenario_data: ScenarioCreate, user_id: int) -> Scenario:
-    """Create a new scenario (owned by user_id)"""
+    """Create a new scenario (owned by user_id). Only context required; link root cause via POST /scenarios/{id}/link-root-cause/{root_cause_id}"""
     db_scenario = Scenario(
         user_id=user_id,
         context=scenario_data.context,
-        summary=scenario_data.summary,
-        root_cause_id=scenario_data.root_cause_id
     )
     db.add(db_scenario)
     db.commit()
@@ -39,7 +38,7 @@ def get_scenario_count_by_root_cause(db: Session, root_cause_id: int) -> int:
     return db.query(Scenario).filter(Scenario.root_cause_id == root_cause_id).count()
 
 def update_scenario(db: Session, scenario_id: int, scenario_data: ScenarioUpdate, user_id: int) -> Optional[Scenario]:
-    """Update scenario (only if owned by user)"""
+    """Update scenario (only if owned by user). Root cause changes via link/unlink endpoints."""
     db_scenario = get_scenario_by_id(db, scenario_id, user_id=user_id)
     if not db_scenario:
         return None
@@ -58,9 +57,14 @@ def link_scenario_to_root_cause(db: Session, scenario_id: int, root_cause_id: in
     if not db_scenario:
         return None
 
+    old_root_cause_id = db_scenario.root_cause_id
     db_scenario.root_cause_id = root_cause_id
     db.commit()
     db.refresh(db_scenario)
+    if old_root_cause_id != root_cause_id:
+        if old_root_cause_id:
+            decrement_usage(db, user_id=user_id, root_cause_id=old_root_cause_id)
+        increment_usage_or_create_link(db, user_id=user_id, root_cause_id=root_cause_id)
     return db_scenario
 
 def delete_scenario(db: Session, scenario_id: int, user_id: int) -> bool:
@@ -68,8 +72,11 @@ def delete_scenario(db: Session, scenario_id: int, user_id: int) -> bool:
     db_scenario = get_scenario_by_id(db, scenario_id, user_id=user_id)
     if not db_scenario:
         return False
+    root_cause_id = db_scenario.root_cause_id
     db.delete(db_scenario)
     db.commit()
+    if root_cause_id:
+        decrement_usage(db, user_id=user_id, root_cause_id=root_cause_id)
     return True
 
 def search_scenarios(db: Session, search_term: str, user_id: int, skip: int = 0, limit: int = 100) -> List[Scenario]:

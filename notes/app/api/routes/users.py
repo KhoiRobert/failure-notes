@@ -13,7 +13,7 @@ from app.services.user_service import (
     delete_user
 )
 from app.services.session_service import create_session
-from app.utils.auth import get_current_user
+from app.utils.auth import get_current_user, get_current_admin
 from app.models.user import User
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -42,13 +42,13 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", status_code=status.HTTP_200_OK)
 def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
-    """Login user and create session"""
+    """Login user and create session. Use email or username."""
     # Authenticate user
-    user = authenticate_user(db, credentials.email, credentials.password)
+    user = authenticate_user(db, credentials.email_or_username, credentials.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            detail="Invalid email/username or password"
         )
     
     # Create session
@@ -62,13 +62,13 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     }
 
 @router.get("/", response_model=list[UserResponse])
-def get_users(
+def get_all_users_list(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    admin: User = Depends(get_current_admin),
 ):
-    """Get all users (authenticated users only)."""
+    """List all users (admin only). Set ADMIN_EMAILS in env."""
     users = get_all_users(db, skip=skip, limit=limit)
     return users
 
@@ -80,17 +80,12 @@ def get_current_user_profile(
     return current_user
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user(
+def get_user_by_id_endpoint(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    admin: User = Depends(get_current_admin),
 ):
-    """Get user by ID. Users may only read their own profile."""
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not allowed to view this user",
-        )
+    """Get user by ID (admin only). Set ADMIN_EMAILS in env."""
     user = get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(
@@ -99,20 +94,14 @@ def get_user(
         )
     return user
 
-@router.put("/{user_id}", response_model=UserResponse)
+@router.put("/me", response_model=UserResponse)
 def update_user_info(
-    user_id: int,
     user_data: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update user information. Users may only update their own account."""
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not allowed to update this user",
-        )
-    user = update_user(db, user_id, user_data)
+    """Update current user's information."""
+    user = update_user(db, current_user.id, user_data)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -120,19 +109,13 @@ def update_user_info(
         )
     return user
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user_account(
-    user_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Delete user account. Users may only delete their own account."""
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not allowed to delete this user",
-        )
-    success = delete_user(db, user_id)
+    """Delete current user's account."""
+    success = delete_user(db, current_user.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

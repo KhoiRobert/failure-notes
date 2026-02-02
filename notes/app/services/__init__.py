@@ -17,10 +17,8 @@ from app.services.root_cause_service import (
     get_root_cause_by_id,
     get_all_root_causes,
     update_root_cause,
-    increment_occurrence_count,
     delete_root_cause,
     search_root_causes,
-    get_root_causes_by_occurrence
 )
 
 from app.services.scenario_service import (
@@ -52,6 +50,7 @@ from app.services.user_root_cause_service import (
     unlink_user_from_root_cause,
     get_user_root_causes,
     get_root_cause_users,
+    get_usage_count,
     is_user_linked_to_root_cause,
     get_user_root_cause_count,
     get_root_cause_user_count
@@ -74,10 +73,8 @@ __all__ = [
     "get_root_cause_by_id",
     "get_all_root_causes",
     "update_root_cause",
-    "increment_occurrence_count",
     "delete_root_cause",
     "search_root_causes",
-    "get_root_causes_by_occurrence",
     # Scenario service
     "create_scenario",
     "get_scenario_by_id",
@@ -99,6 +96,7 @@ __all__ = [
     "delete_expired_sessions",
     "delete_all_user_sessions",
     # User root cause service
+    "get_usage_count",
     "link_user_to_root_cause",
     "unlink_user_from_root_cause",
     "get_user_root_causes",

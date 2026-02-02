@@ -9,7 +9,6 @@ def create_root_cause(db: Session, root_cause_data: RootCauseCreate) -> RootCaus
         title=root_cause_data.title,
         description=root_cause_data.description,
         solution=root_cause_data.solution,
-        occurrence_count=1
     )
     db.add(db_root_cause)
     db.commit()
@@ -48,17 +47,6 @@ def update_root_cause_solution(db: Session, root_cause_id: int, solution: Option
     db.refresh(db_root_cause)
     return db_root_cause
 
-def increment_occurrence_count(db: Session, root_cause_id: int) -> Optional[RootCause]:
-    """Increment occurrence count for a root cause"""
-    db_root_cause = get_root_cause_by_id(db, root_cause_id)
-    if not db_root_cause:
-        return None
-    
-    db_root_cause.occurrence_count += 1
-    db.commit()
-    db.refresh(db_root_cause)
-    return db_root_cause
-
 def delete_root_cause(db: Session, root_cause_id: int) -> bool:
     """Delete a root cause"""
     db_root_cause = get_root_cause_by_id(db, root_cause_id)
@@ -75,8 +63,3 @@ def search_root_causes(db: Session, search_term: str, skip: int = 0, limit: int 
         (RootCause.description.ilike(f"%{search_term}%"))
     ).offset(skip).limit(limit).all()
 
-def get_root_causes_by_occurrence(db: Session, min_occurrence: int = 1, skip: int = 0, limit: int = 100) -> List[RootCause]:
-    """Get root causes filtered by minimum occurrence count"""
-    return db.query(RootCause).filter(
-        RootCause.occurrence_count >= min_occurrence
-    ).order_by(RootCause.occurrence_count.desc()).offset(skip).limit(limit).all()

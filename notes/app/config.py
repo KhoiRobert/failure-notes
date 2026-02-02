@@ -30,6 +30,19 @@ class Settings(BaseSettings):
     PORT: int = Field(default=8000, description="Bind port")
     DEBUG: bool = Field(default=True, description="Debug mode")
 
+    # Admin (comma-separated emails; users with these emails can access admin APIs)
+    ADMIN_EMAILS: str = Field(
+        default="",
+        description="Comma-separated admin emails for admin-only endpoints",
+    )
+
+    @property
+    def admin_emails_set(self) -> set[str]:
+        """Admin emails as a set for fast lookup"""
+        if not self.ADMIN_EMAILS:
+            return set()
+        return {e.strip().lower() for e in self.ADMIN_EMAILS.split(",") if e.strip()}
+
     # Security
     SECRET_KEY: str = Field(
         default="dev-secret-key-change-in-production-min-32-chars-long",

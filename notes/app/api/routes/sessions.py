@@ -132,17 +132,11 @@ def logout(
         )
     return None
 
-@router.delete("/user/{user_id}", status_code=status.HTTP_200_OK)
-def logout_all_user_sessions(
-    user_id: int,
+@router.delete("/me/all", status_code=status.HTTP_200_OK)
+def logout_all_my_sessions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Delete all sessions for a user. Users may only logout their own sessions."""
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not allowed to logout other users",
-        )
-    count = delete_all_user_sessions(db, user_id)
+    """Delete all sessions for current user (logout everywhere)."""
+    count = delete_all_user_sessions(db, current_user.id)
     return {"message": f"Deleted {count} session(s)"}
