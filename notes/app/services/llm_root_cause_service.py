@@ -68,10 +68,18 @@ def _find_matching_root_cause(context: str, root_causes: List[Any]) -> Optional[
                     "system",
                     "You are an expert at matching failure scenarios to root causes. "
                     "Given a scenario context and a list of existing root causes (id, title, description), "
-                    "return the id of the root cause that best matches this scenario. "
-                    "Return root_cause_id=0 only if none of the listed root causes match.",
+                    "return the id of the root cause that best matches this scenario.\n\n"
+                    "CRITICAL MATCHING RULES:\n"
+                    "1. Match based on the UNDERLYING ROOT CAUSE, not exact wording or specific examples\n"
+                    "2. Scenarios describing the same type of problem should match the same root cause\n"
+                    "3. Minor word differences (like 'this' vs 'that', 'here' vs 'there') should NOT prevent matching\n"
+                    "4. Focus on semantic meaning: if two scenarios describe the same failure pattern or issue type, they match\n"
+                    "5. Be lenient: when in doubt, match to an existing root cause rather than creating a new one\n\n"
+                    "Return root_cause_id=0 ONLY if the scenario describes a fundamentally different type of problem "
+                    "that doesn't match any existing root cause.",
                 ),
-                ("human", "Scenario context:\n\n{context}\n\nExisting root causes:\n{root_causes}"),
+                ("human", "Scenario context:\n\n{context}\n\nExisting root causes:\n{root_causes}\n\n"
+                    "Which root cause ID matches this scenario? (Return 0 if none match)"),
             ]
         )
         chain = prompt | structured_llm
