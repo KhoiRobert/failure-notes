@@ -8,7 +8,7 @@ from app.schemas.scenario import (
     ScenarioWithRootCause
 )
 from app.services.scenario_service import (
-    create_scenario,
+    create_scenario_with_auto_root_cause,
     get_scenario_by_id,
     get_all_scenarios,
     get_scenarios_by_root_cause,
@@ -29,8 +29,8 @@ def create_new_scenario(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new scenario (owned by current user). Only context required."""
-    scenario = create_scenario(db, scenario_data, user_id=current_user.id)
+    """Create a new scenario (owned by current user). LLM detects root cause and links it when configured."""
+    scenario = create_scenario_with_auto_root_cause(db, scenario_data, user_id=current_user.id)
     return scenario
 
 @router.get("/", response_model=list[ScenarioResponse])

@@ -76,7 +76,7 @@ class Settings(BaseSettings):
 
     # AI Service (for future use)
     AI_API_KEY: str = Field(default="", description="AI API key")
-    AI_API_URL: str = Field(default="https://api.openai.com/v1", description="AI API base URL")
+    AI_API_URL: str = Field(default="https://api.openai.com", description="AI API base URL (no /v1; client adds it)")
     AI_MODEL: str = Field(default="gpt-4", description="AI model name")
 
     # Logging
