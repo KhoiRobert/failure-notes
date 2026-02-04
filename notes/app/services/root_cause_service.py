@@ -23,6 +23,17 @@ def get_all_root_causes(db: Session, skip: int = 0, limit: int = 100) -> List[Ro
     """Get all root causes with pagination"""
     return db.query(RootCause).offset(skip).limit(limit).all()
 
+
+def get_all_root_cause_titles(db: Session, skip: int = 0, limit: int = 100) -> List[dict]:
+    """Get all root causes with only id and title (lighter query)."""
+    rows = (
+        db.query(RootCause.id, RootCause.title)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return [{"id": r.id, "title": r.title} for r in rows]
+
 def update_root_cause(db: Session, root_cause_id: int, root_cause_data: RootCauseUpdate) -> Optional[RootCause]:
     """Update root cause (full update, for admin/internal use)"""
     db_root_cause = get_root_cause_by_id(db, root_cause_id)

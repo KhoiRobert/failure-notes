@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from app.services.user_root_cause_service import increment_usage_or_create_link, decrement_usage
 from app.services.root_cause_service import (
     create_root_cause as create_root_cause_record,
-    get_all_root_causes,
+    get_all_root_cause_titles,
 )
 from app.services.llm_root_cause_service import detect_root_cause_from_context
 from typing import Optional, List
@@ -51,8 +51,9 @@ def create_scenario_with_auto_root_cause(
         logger.info("AI_API_KEY not set; creating scenario without root cause")
         return create_scenario(db, scenario_data, user_id=user_id)
 
-    existing_root_causes = get_all_root_causes(db, skip=0, limit=300)
-    valid_ids = {rc.id for rc in existing_root_causes} if existing_root_causes else set()
+    existing_root_causes = get_all_root_cause_titles(db, skip=0, limit=300)
+    logger.info("Checking against %d existing root causes", len(existing_root_causes))
+    valid_ids = {rc.get("id") if isinstance(rc, dict) else getattr(rc, "id", None) for rc in existing_root_causes if rc} if existing_root_causes else set()
     result = detect_root_cause_from_context(
         scenario_data.context,
         existing_root_causes=existing_root_causes,

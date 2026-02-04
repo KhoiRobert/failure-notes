@@ -31,3 +31,14 @@ class RootCauseResponse(BaseModel):
 class RootCauseWithScenarios(RootCauseResponse):
     """Root cause with related scenarios count"""
     scenarios_count: Optional[int] = None
+
+
+class RootCauseWithUsage(RootCauseResponse):
+    """Root cause with optional usage count for the current user"""
+    usage_count: Optional[int] = None
+
+
+class RootCauseTitle(BaseModel):
+    """Root cause with only id and title"""
+    id: int
+    title: str

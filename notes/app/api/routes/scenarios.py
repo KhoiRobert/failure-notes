@@ -7,6 +7,7 @@ from app.schemas.scenario import (
     ScenarioResponse,
     ScenarioWithRootCause
 )
+from app.schemas.root_cause import RootCauseResponse
 from app.services.scenario_service import (
     create_scenario_with_auto_root_cause,
     get_scenario_by_id,
@@ -74,7 +75,6 @@ def get_scenario(
     # Create response with root cause
     response = ScenarioWithRootCause.model_validate(scenario)
     if root_cause:
-        from app.schemas.root_cause import RootCauseResponse
         response.root_cause = RootCauseResponse.model_validate(root_cause)
     
     return response

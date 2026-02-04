@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.user_root_cause import UserRootCause
-from app.schemas.user_root_cause import UserRootCauseCreate
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 def increment_usage_or_create_link(db: Session, user_id: int, root_cause_id: int) -> int:
@@ -49,8 +48,19 @@ def get_usage_count(db: Session, user_id: int, root_cause_id: int) -> int:
     return link.usage_count if link else 0
 
 
+def get_usage_counts_for_root_causes(db: Session, user_id: int, root_cause_ids: List[int]) -> Dict[int, int]:
+    """Get usage_count per root_cause_id for the given user. Returns {root_cause_id: count}; missing ids get 0."""
+    if not root_cause_ids:
+        return {}
+    rows = db.query(UserRootCause.root_cause_id, UserRootCause.usage_count).filter(
+        UserRootCause.user_id == user_id,
+        UserRootCause.root_cause_id.in_(root_cause_ids),
+    ).all()
+    return {int(rc_id): int(count) for rc_id, count in rows}
+
+
 def link_user_to_root_cause(db: Session, user_id: int, root_cause_id: int) -> UserRootCause:
-    """Link a user to a root cause (explicit link; usage_count=0 until they create scenarios)"""
+    """Link a user to a root cause (explicit link; usage_count defaults to 1)"""
     existing = db.query(UserRootCause).filter(
         UserRootCause.user_id == user_id,
         UserRootCause.root_cause_id == root_cause_id
@@ -59,7 +69,7 @@ def link_user_to_root_cause(db: Session, user_id: int, root_cause_id: int) -> Us
     if existing:
         return existing
     
-    db_link = UserRootCause(user_id=user_id, root_cause_id=root_cause_id, usage_count=0)
+    db_link = UserRootCause(user_id=user_id, root_cause_id=root_cause_id)
     db.add(db_link)
     db.commit()
     db.refresh(db_link)

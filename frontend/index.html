@@ -125,25 +125,54 @@
             color: #6b7280;
             cursor: pointer;
             padding: 6px 8px;
-            font-size: 20px;
+            font-size: 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: color 0.2s;
+            transition: background-color 0.15s ease, color 0.15s ease;
             z-index: 10;
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             line-height: 1;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin: 0;
+            outline: none;
+            will-change: background-color, color;
         }
         .password-toggle:hover {
             color: #374151;
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateY(-50%);
+        }
+        .password-toggle:active {
+            background: rgba(0, 0, 0, 0.1);
+            color: #374151;
+            transform: translateY(-50%);
         }
         .password-toggle:focus {
             outline: 2px solid #667eea;
             outline-offset: 2px;
-            border-radius: 4px;
+            transform: translateY(-50%);
+        }
+        .input-wrapper {
+            overflow: visible;
+            position: relative;
+        }
+        .toggle-icon {
+            display: inline-block;
+            font-size: 18px;
+            line-height: 1;
+            width: 20px;
+            height: 20px;
+        }
+        .toggle-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
         }
         textarea {
             resize: vertical;
@@ -486,6 +515,10 @@
             white-space: nowrap;
             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
         }
+        .root-cause-badge.root-cause-badge-high {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+        }
         .no-root-cause {
             color: #9ca3af;
             font-size: 14px;
@@ -623,8 +656,13 @@
                         class="password-toggle" 
                         onclick="togglePassword('loginPassword', event)"
                         aria-label="Show password"
+                        data-state="hidden"
                     >
-                        👁️
+                        <span class="toggle-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </span>
                     </button>
                 </div>
             </div>
@@ -698,8 +736,13 @@
                         class="password-toggle" 
                         onclick="togglePassword('regPassword', event)"
                         aria-label="Show password"
+                        data-state="hidden"
                     >
-                        👁️
+                        <span class="toggle-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </span>
                     </button>
                 </div>
             </div>
@@ -802,16 +845,31 @@
             
             if (!toggle) return;
             
+            const icon = toggle.querySelector('.toggle-icon');
             if (input.type === 'password') {
                 input.type = 'text';
                 input.classList.add('password-input');
-                toggle.innerHTML = '🙈';
+                if (icon) {
+                    icon.innerHTML = `
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                        </svg>
+                    `;
+                }
                 toggle.setAttribute('aria-label', 'Hide password');
+                toggle.setAttribute('data-state', 'visible');
             } else {
                 input.type = 'password';
                 input.classList.remove('password-input');
-                toggle.innerHTML = '👁️';
+                if (icon) {
+                    icon.innerHTML = `
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                    `;
+                }
                 toggle.setAttribute('aria-label', 'Show password');
+                toggle.setAttribute('data-state', 'hidden');
             }
             
             // Maintain focus on input
@@ -1020,11 +1078,21 @@
                     throw new Error(errorData.detail || `HTTP ${res.status}: ${res.statusText}`);
                 }
                 
-                const rootCauses = await res.json();
+                let rootCauses = await res.json();
                 
                 if (!Array.isArray(rootCauses)) {
                     throw new Error('Invalid response format');
                 }
+
+                // Sort: usage_count > 2 first, then by usage_count descending
+                rootCauses = rootCauses.slice().sort((a, b) => {
+                    const countA = parseInt(a.usage_count) || 0;
+                    const countB = parseInt(b.usage_count) || 0;
+                    const highA = countA > 2 ? 1 : 0;
+                    const highB = countB > 2 ? 1 : 0;
+                    if (highB !== highA) return highB - highA;
+                    return countB - countA;
+                });
                 
                 if (rootCauses.length === 0) {
                     div.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No root causes yet.<br>Create scenarios to generate them automatically!</p></div>';
@@ -1043,12 +1111,13 @@
                     const solEscaped = rc.solution ? escapeHtml(String(rc.solution)) : '';
                     const usageCount = parseInt(rc.usage_count) || 0;
                     const titleSafe = titleEscaped.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const badgeClass = usageCount > 2 ? 'root-cause-badge root-cause-badge-high' : 'root-cause-badge';
                     
                     return `
-                        <div class="scenario-card clickable" onclick="showScenariosView(${rc.id}, '${titleSafe}')" role="button" tabindex="0" aria-label="View scenarios for ${titleEscaped}" onkeypress="if(event.key==='Enter'||event.key===' ') {event.preventDefault(); showScenariosView(${rc.id}, '${titleSafe}');}">
+                        <div class="scenario-card clickable" onclick="showScenariosView(${rc.id}, '${titleSafe}')" role="button" tabindex="0" aria-label="View scenarios for ${titleEscaped}. Got this ${usageCount} time${usageCount !== 1 ? 's' : ''}." onkeypress="if(event.key==='Enter'||event.key===' ') {event.preventDefault(); showScenariosView(${rc.id}, '${titleSafe}');}">
                             <div class="scenario-card-header">
                                 <h3 class="scenario-card-title">${titleEscaped}</h3>
-                                ${usageCount > 0 ? `<span class="root-cause-badge" aria-label="Used ${usageCount} time${usageCount !== 1 ? 's' : ''}">${usageCount}×</span>` : ''}
+                                ${usageCount > 0 ? `<span class="${badgeClass}" aria-label="Got this ${usageCount} time${usageCount !== 1 ? 's' : ''}">Got this ${usageCount}×</span>` : ''}
                             </div>
                             <div class="scenario-card-body">
                                 ${descEscaped ? `<p class="scenario-card-description">${descEscaped}</p>` : ''}

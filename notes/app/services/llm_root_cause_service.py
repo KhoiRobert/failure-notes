@@ -50,11 +50,15 @@ def _find_matching_root_cause(context: str, root_causes: List[Any]) -> Optional[
     try:
         lines = []
         for rc in root_causes:
-            rid = getattr(rc, "id", rc.get("id") if isinstance(rc, dict) else None)
-            title = getattr(rc, "title", rc.get("title", "")) or ""
-            desc = getattr(rc, "description", rc.get("description", "")) or ""
-            lines.append(f"- ID {rid}: {title}\n  {desc}".strip())
-        root_causes_text = "\n".join(lines)
+            if isinstance(rc, dict):
+                rid = rc.get("id")
+                title = (rc.get("title") or "") or ""
+            else:
+                rid = getattr(rc, "id", None)
+                title = (getattr(rc, "title", None) or "") or ""
+            if rid and title:
+                lines.append(f"- ID {rid}: {title}")
+        root_causes_text = "\n".join(lines) if lines else "(no root causes)"
         llm = ChatOpenAI(
             model=settings.AI_MODEL,
             api_key=settings.AI_API_KEY,
@@ -66,19 +70,20 @@ def _find_matching_root_cause(context: str, root_causes: List[Any]) -> Optional[
             [
                 (
                     "system",
-                    "You are an expert at matching failure scenarios to root causes. "
-                    "Given a scenario context and a list of existing root causes (id, title, description), "
-                    "return the id of the root cause that best matches this scenario.\n\n"
+                    "You are an expert at matching failure scenarios to root causes based on their titles. "
+                    "Given a scenario context and a list of existing root cause titles (with IDs), "
+                    "return the ID of the root cause whose title best matches the scenario's underlying problem.\n\n"
                     "CRITICAL MATCHING RULES:\n"
-                    "1. Match based on the UNDERLYING ROOT CAUSE, not exact wording or specific examples\n"
-                    "2. Scenarios describing the same type of problem should match the same root cause\n"
-                    "3. Minor word differences (like 'this' vs 'that', 'here' vs 'there') should NOT prevent matching\n"
-                    "4. Focus on semantic meaning: if two scenarios describe the same failure pattern or issue type, they match\n"
-                    "5. Be lenient: when in doubt, match to an existing root cause rather than creating a new one\n\n"
+                    "1. Match based on the UNDERLYING ROOT CAUSE described by the title, not exact wording\n"
+                    "2. Scenarios describing the same type of problem should match the same root cause title\n"
+                    "3. Minor word differences in the scenario (like 'this' vs 'that') should NOT prevent matching\n"
+                    "4. Focus on semantic meaning: if the scenario describes the same failure pattern as a root cause title, they match\n"
+                    "5. Be lenient: when in doubt, match to an existing root cause rather than creating a new one\n"
+                    "6. The root cause title represents the core problem type - match scenarios to titles that describe the same problem type\n\n"
                     "Return root_cause_id=0 ONLY if the scenario describes a fundamentally different type of problem "
-                    "that doesn't match any existing root cause.",
+                    "that doesn't match any existing root cause title.",
                 ),
-                ("human", "Scenario context:\n\n{context}\n\nExisting root causes:\n{root_causes}\n\n"
+                ("human", "Scenario context:\n\n{context}\n\nExisting root cause titles:\n{root_causes}\n\n"
                     "Which root cause ID matches this scenario? (Return 0 if none match)"),
             ]
         )
