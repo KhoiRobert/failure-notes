@@ -18,7 +18,7 @@ from app.services.root_cause_service import (
     search_root_causes,
 )
 from app.services.scenario_service import get_scenario_count_by_root_cause
-from app.utils.auth import get_current_user, get_optional_user, security
+from app.utils.auth import get_optional_user, security
 from app.models.user import User
 from app.services.user_root_cause_service import get_usage_counts_for_root_causes
 from typing import Optional
@@ -29,7 +29,6 @@ router = APIRouter(prefix="/root-causes", tags=["root-causes"])
 def create_new_root_cause(
     root_cause_data: RootCauseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
 ):
     """Create a new root cause (requires authentication)"""
     root_cause = create_root_cause(db, root_cause_data)
@@ -104,7 +103,6 @@ def update_root_cause_solution_endpoint(
     root_cause_id: int,
     data: RootCauseUpdateSolution,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
 ):
     """Edit recommendation/solution for a root cause (users can only edit this field)"""
     root_cause = update_root_cause_solution(db, root_cause_id, data.solution)

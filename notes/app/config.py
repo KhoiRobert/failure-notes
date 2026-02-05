@@ -85,5 +85,18 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = Field(default="development", description="development|production")
 
+    # Email alerts (Gmail SMTP)
+    EMAIL_ENABLED: bool = Field(default=False, description="Enable email alerts")
+    EMAIL_SMTP_HOST: str = Field(default="smtp.gmail.com", description="SMTP server host")
+    EMAIL_SMTP_PORT: int = Field(default=587, description="SMTP server port")
+    EMAIL_SMTP_USER: str = Field(default="", description="SMTP username (Gmail address)")
+    EMAIL_SMTP_PASSWORD: str = Field(default="", description="SMTP password (Gmail app password)")
+    EMAIL_FROM: str = Field(default="", description="From email address")
+    EMAIL_ALERT_THRESHOLD: int = Field(
+        default=2,
+        ge=0,
+        description="Send alert when usage_count exceeds this value (must be >= 0)"
+    )
+
 # Create settings instance
 settings = Settings()

@@ -1,24 +1,80 @@
+import logging
 from sqlalchemy.orm import Session
 from app.models.user_root_cause import UserRootCause
 from typing import Optional, List, Dict
+from app.config import settings
+from app.services.user_service import get_user_by_id
+from app.services.root_cause_service import get_root_cause_by_id
+from app.utils.email_service import send_usage_alert_email
+
+logger = logging.getLogger(__name__)
 
 
 def increment_usage_or_create_link(db: Session, user_id: int, root_cause_id: int) -> int:
-    """When user creates scenario with root_cause: if user_root_cause exists, increment usage_count; else create with 1. Returns new count."""
+    """
+    When user creates scenario with root_cause: if user_root_cause exists, increment usage_count; 
+    else create with 1. Returns new count.
+    
+    Sends email alert when usage_count crosses EMAIL_ALERT_THRESHOLD (default: 2).
+    Alert is sent only when crossing the threshold (e.g., when count goes from 2 to 3).
+    """
     link = db.query(UserRootCause).filter(
         UserRootCause.user_id == user_id,
         UserRootCause.root_cause_id == root_cause_id,
     ).first()
+    
     if link:
+        old_count = link.usage_count
         link.usage_count += 1
+        new_count = link.usage_count
         db.commit()
         db.refresh(link)
-        return link.usage_count
-    link = UserRootCause(user_id=user_id, root_cause_id=root_cause_id)  # default usage_count=1
-    db.add(link)
-    db.commit()
-    db.refresh(link)
-    return 1
+        
+        # Send email alert only when crossing the threshold
+        should_alert = old_count <= settings.EMAIL_ALERT_THRESHOLD < new_count
+    else:
+        link = UserRootCause(user_id=user_id, root_cause_id=root_cause_id)  # default usage_count=1
+        db.add(link)
+        db.commit()
+        db.refresh(link)
+        new_count = link.usage_count
+        # For new links, check if initial count exceeds threshold (shouldn't happen with default=1)
+        should_alert = new_count > settings.EMAIL_ALERT_THRESHOLD
+    
+    # Send email alert if threshold was crossed
+    if should_alert:
+        try:
+            user = get_user_by_id(db, user_id)
+            root_cause = get_root_cause_by_id(db, root_cause_id)
+            
+            if user and root_cause:
+                # Send email alert asynchronously (fire and forget)
+                # We don't want email failures to block the scenario creation
+                send_usage_alert_email(
+                    user_email=user.email,
+                    username=user.username,
+                    root_cause_title=root_cause.title,
+                    root_cause_description=root_cause.description,
+                    root_cause_solution=root_cause.solution,
+                    usage_count=new_count,
+                )
+            else:
+                logger.warning(
+                    "Cannot send usage alert: user_id=%s or root_cause_id=%s not found",
+                    user_id,
+                    root_cause_id,
+                )
+        except Exception as e:
+            # Log error but don't fail the operation
+            logger.error(
+                "Failed to send usage alert email for user_id=%s, root_cause_id=%s: %s",
+                user_id,
+                root_cause_id,
+                e,
+                exc_info=True,
+            )
+    
+    return new_count
 
 
 def decrement_usage(db: Session, user_id: int, root_cause_id: int) -> int:
