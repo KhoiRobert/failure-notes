@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+docs/
+*.md
+!docker/README.md
+
+# Config files (may contain secrets)
+config/*.yml
+!config/*.example
+
+# Notes
+notes/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Node
+node_modules/
+npm-debug.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
